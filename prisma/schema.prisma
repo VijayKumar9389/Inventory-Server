@@ -1,0 +1,61 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id       Int     @id @unique @default(autoincrement())
+  username String  @unique
+  password String
+  isAdmin  Boolean @default(false)
+}
+
+// Define the item model
+model Item {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  description String?
+  image       String?
+  value       Float
+  inventory   Inventory[]
+  ItemRecord  ItemRecord[]
+}
+
+// Define the location model
+model Location {
+  id          Int          @id @default(autoincrement())
+  name        String       @unique
+  description String?
+  inventory   Inventory[]
+  ItemRecord  ItemRecord[]
+}
+
+// Define the inventory model
+model Inventory {
+  id         Int          @id @default(autoincrement())
+  records    ItemRecord[]
+  item       Item         @relation(fields: [itemId], references: [id])
+  itemId     Int
+  location   Location     @relation(fields: [locationId], references: [id])
+  locationId Int
+
+  @@unique([itemId, locationId])
+}
+
+// Define the item record model
+model ItemRecord {
+  id          Int        @id @default(autoincrement())
+  receipt     String?
+  missing     Boolean    @default(false)
+  notes       String?
+  item        Item       @relation(fields: [itemId], references: [id])
+  itemId      Int
+  location    Location   @relation(fields: [locationId], references: [id])
+  locationId  Int
+  Inventory   Inventory? @relation(fields: [inventoryId], references: [id])
+  inventoryId Int?
+}
