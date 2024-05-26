@@ -19,7 +19,7 @@ app.use(
         origin: process.env.ORIGIN,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization', 'refreshToken', 'accessToken'],
+        allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin', 'refreshToken', 'accessToken'],
         exposedHeaders: ['Authorization'],
     })
 );
