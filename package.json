@@ -4,9 +4,10 @@
   "main": "index.js",
   "license": "MIT",
   "scripts": {
-    "start": "npm install && npm run build && npx prisma generate && node dist/server.js",
-    "build": "tsc",
-    "dev": "nodemon --exec ts-node src/server.ts"
+    "start": "npm run prisma:generate && npm run prisma:push && node dist/server.js",
+    "prisma:generate": "npx prisma generate",
+    "prisma:push": "npx prisma db push",
+    "dev": "nodemon src/server.ts"
   },
   "devDependencies": {
     "@types/bcrypt": "^5.0.2",
@@ -20,6 +21,8 @@
     "typescript": "^5.4.3"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.583.0",
+    "@aws-sdk/s3-request-presigner": "^3.583.0",
     "@prisma/client": "5.6.0",
     "@types/multer": "^1.4.11",
     "@types/uuid": "^9.0.8",

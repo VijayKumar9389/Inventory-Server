@@ -1,16 +1,17 @@
-import { Request, Response } from "express";
-import { UserServices } from "../services/user.service";
-import { CreateUserDTO, TokenResponse } from "../models/user.models";
-import bcrypt from 'bcrypt';
+import {Request, Response} from "express";
+import {UserServices} from "../services/user.service";
+import {CreateUserDTO, TokenResponse} from "../models/user.models";
 import jwt from 'jsonwebtoken';
+import {validateRefreshToken} from "../utils/token.utils";
 
 const userService: UserServices = new UserServices();
 
 export class UserController {
 
+    // Create a new user
     async createUser(req: Request, res: Response): Promise<void> {
         try {
-            const user: CreateUserDTO = req.body as CreateUserDTO;
+            const user: CreateUserDTO = req.body;
             if (!user) {
                 throw new Error("Invalid user data");
             }
@@ -18,44 +19,37 @@ export class UserController {
             res.status(201).json(newUser);
         } catch (error) {
             console.error('Error creating user:', error);
-            res.status(500).json({ error: 'Failed to create user' });
+            res.status(500).json({error: 'Failed to create user'});
         }
     }
 
+    // Login User
     async login(req: Request, res: Response): Promise<void> {
-        const { username, password } = req.body;
+        const {username, password} = req.body;
+
+        // Validate request body
+        if (!username || !password) {
+            res.status(400).json({error: 'Username and password are required'});
+            return;
+        }
 
         try {
             const result = await userService.login(username, password);
-
-            res.cookie('accessToken', result.accessToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                domain: process.env.COOKIE_DOMAIN || 'localhost',
-                maxAge: 1000 * 60, // 1 minute
+            res.status(200).json({
+                auth: true,
+                user: result.user,
+                accessToken: result.accessToken,
+                refreshToken: result.refreshToken,
             });
-
-            res.cookie('refreshToken', result.refreshToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                domain: process.env.COOKIE_DOMAIN || 'localhost',
-                maxAge: 1000 * 60 * 60 * 24 * 30, // 30 days
-            });
-
-            res.status(200).json({ auth: true, user: result.user });
         } catch (error: any) {
             console.error('Error during login:', error);
-            res.status(500).json({ error: 'Failed to login' });
-        }
-    }
 
-    // Register a new user
-    async logout(req: Request, res: Response): Promise<void> {
-        res.clearCookie('accessToken');
-        res.clearCookie('refreshToken');
-        res.status(200).json({ auth: false });
+            if (error.message === 'User does not exist' || error.message === 'Incorrect password') {
+                res.status(401).json({error: error.message});
+            } else {
+                res.status(500).json({error: 'Failed to login'});
+            }
+        }
     }
 
     //Get all users
@@ -69,9 +63,9 @@ export class UserController {
         }
     }
 
-    // Refresh the access token
-    async refreshTokens(req: Request, res: Response): Promise<void> {
-        const refreshToken = req.cookies.refreshToken;
+    async verifyRefreshToken(req: Request, res: Response): Promise<void> {
+        // Extract the refresh token from the 'refreshToken' header
+        const refreshToken = req.headers.refreshtoken as string | undefined;
         if (!refreshToken) {
             res.status(401).json({ error: 'Refresh token not found' });
             return;
@@ -79,21 +73,34 @@ export class UserController {
 
         try {
             const decoded = jwt.verify(refreshToken, 'secret') as any;
+            // Assuming the verification is successful, you can send the user data back as well
+            res.status(200).json({ auth: true, user: decoded.username });
+        } catch (error) {
+            console.error('Error verifying refresh token:', error);
+            // If verification fails, treat it as a logout action
+            res.status(403).json({ auth: false, user: '' });
+        }
+    }
+
+    async refreshAccessToken(req: Request, res: Response): Promise<void> {
+        // Extract the refresh token from the 'refreshToken' header
+        const refreshToken = req.headers.refreshtoken as string | undefined;
+        if (!refreshToken) {
+            res.status(401).json({ error: 'Refresh token not found' });
+            return;
+        }
+
+        try {
+            // Use the external function to validate the refresh token
+            const decoded = validateRefreshToken(refreshToken) as any;
             const newAccessToken = jwt.sign({ username: decoded.username }, 'secret', { expiresIn: '1m' });
 
-            res.cookie('accessToken', newAccessToken, {
-                httpOnly: true,
-                secure: process.env.NODE_ENV === 'production',
-                sameSite: 'strict',
-                domain: process.env.COOKIE_DOMAIN || 'localhost',
-                maxAge: 1000 * 60, // 1 minute
-            });
-
-            res.status(200).json({ auth: true });
+            res.status(200).json({ accessToken: newAccessToken });
         } catch (error) {
             console.error('Error refreshing tokens:', error);
             res.status(403).json({ error: 'Invalid refresh token' });
         }
     }
+
 }
 

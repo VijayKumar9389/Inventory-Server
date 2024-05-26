@@ -1,22 +1,18 @@
 import {PrismaClient} from '@prisma/client';
 import {ItemWithInventory, UploadItemDTO, UpdateItemDTO} from "../models/inventory.models";
+import {v4 as uuidv4} from "uuid";
 const prisma = new PrismaClient();
 export class ItemServices {
 
     // Create a new item
-    public async createItem(itemInput: UploadItemDTO): Promise<any> {
+    public async createItem(itemInput: UpdateItemDTO): Promise<any> {
         try {
-            let imageUrl: string | undefined = undefined;
-
-            if (itemInput.image) {
-                imageUrl = itemInput.image.filename;
-            }
 
             return await prisma.item.create({
                 data: {
                     name: itemInput.name,
                     description: itemInput.description,
-                    image: imageUrl,
+                    image: itemInput.image,
                     value: itemInput.value,
                 },
             });

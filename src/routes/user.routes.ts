@@ -19,14 +19,14 @@ router.get('/getAll', async (req: Request, res: Response): Promise<void> => {
     await userController.getUsers(req, res);
 });
 
-//Logout
-router.post('/logout', async (req: Request, res: Response): Promise<void> => {
-    await userController.logout(req, res);
+//Refresh Token
+router.post('/refresh-accessToken', async (req: Request, res: Response): Promise<void> => {
+    await userController.refreshAccessToken(req, res);
 });
 
-//Refresh Token
-router.post('/refresh-token', async (req: Request, res: Response): Promise<void> => {
-    await userController.refreshTokens(req, res);
+// Verify the refresh token
+router.post('/verify-token', async (req: Request, res: Response): Promise<void> => {
+    await userController.verifyRefreshToken(req, res);
 });
 
 export default router;

@@ -2,6 +2,7 @@ import {PrismaClient, User} from "@prisma/client";
 import {CreateUserDTO, TokenResponse} from "../models/user.models";
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
+import {generateAccessToken, generateRefreshToken} from "../utils/token.utils";
 
 export class UserServices {
 
@@ -48,6 +49,7 @@ export class UserServices {
                 where: {username},
             });
 
+            // Check if the user exists
             if (!user) {
                 throw new Error('User does not exist');
             }
@@ -55,13 +57,14 @@ export class UserServices {
             // Compare the password with the hashed password
             const passwordMatch: boolean = await bcrypt.compare(password, user.password);
 
+            // If the password does not match, throw an error
             if (!passwordMatch) {
                 throw new Error('Incorrect password');
             }
 
             // Generate an access token and a refresh token
-            const token: string = this.generateAccessToken(user);
-            const refreshToken: string = jwt.sign({user}, 'secret', {expiresIn: '5min'});
+            const token: string = generateAccessToken(user);
+            const refreshToken: string = generateRefreshToken(user);
             console.log(`${user.username} successfully logged in`);
 
             return {
@@ -70,25 +73,26 @@ export class UserServices {
                 refreshToken: refreshToken,
                 user: user.username,
             };
+
         } catch (error: any) {
             throw new Error(error.message);
         }
     }
 
-    // Generate an access token
-    private generateAccessToken(user: any): string {
-        const secretKey = 'secret';
-        const expiresIn = '1min';
-
-        return jwt.sign(
-            {
-                id: user.id,
-                username: user.username,
-                isAdmin: user.isAdmin,
-            },
-            secretKey,
-            {expiresIn}
-        );
-    }
+    // // Generate an access token
+    // private generateAccessToken(user: any): string {
+    //     const secretKey = 'secret';
+    //     const expiresIn = '1min';
+    //
+    //     return jwt.sign(
+    //         {
+    //             id: user.id,
+    //             username: user.username,
+    //             isAdmin: user.isAdmin,
+    //         },
+    //         secretKey,
+    //         {expiresIn}
+    //     );
+    // }
 
 }

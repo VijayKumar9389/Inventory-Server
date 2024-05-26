@@ -5,13 +5,17 @@ import {InventoryServices} from "../services/inventory.services";
 import {ItemRecord} from "@prisma/client";
 import path from "path";
 import fs from "fs";
+import {DeleteObjectCommand, PutObjectCommand} from "@aws-sdk/client-s3";
+import {bucketName, s3} from "../middleware/s3";
+import {v4 as uuidv4} from "uuid";
 
 const itemRecordService: ItemRecordServices = new ItemRecordServices();
 const inventoryService: InventoryServices = new InventoryServices();
 
 export class ItemRecordControllers {
 
-    // Controller method to handle the HTTP request
+
+// Controller method to handle the HTTP request
     public async editItemRecord(req: Request, res: Response): Promise<void> {
         try {
             const id: number = parseInt(req.params.id);
@@ -39,14 +43,42 @@ export class ItemRecordControllers {
 
             // Update the receipt property if a new file is uploaded
             if (imageFile) {
-                // Remove the current receipt file if it exists
+                // Generate a unique name for the new file
+                const uniqueFileName: string = uuidv4();
+
+                // Delete the current receipt file from S3 if it exists
                 if (currentItemRecord.receipt) {
-                    const currentReceiptPath: string = path.join('uploads', currentItemRecord.receipt);
-                    fs.unlinkSync(currentReceiptPath);
+                    const deleteParams = {
+                        Bucket: bucketName,
+                        Key: currentItemRecord.receipt,
+                    };
+
+                    try {
+                        await s3.send(new DeleteObjectCommand(deleteParams));
+                    } catch (error) {
+                        console.error('Error deleting old file from S3:', error);
+                        res.status(500).json({ message: 'Error deleting old file from S3' });
+                        return;
+                    }
                 }
 
-                // Update the receipt property in the database with the new file path
-                updatedReceipt = path.basename(imageFile.path);
+                // Set up parameters for uploading to S3
+                const uploadParams = {
+                    Bucket: bucketName,
+                    Key: uniqueFileName,
+                    Body: imageFile.buffer,
+                    ContentType: imageFile.mimetype,
+                };
+
+                try {
+                    // Upload the new file to S3
+                    await s3.send(new PutObjectCommand(uploadParams));
+                    updatedReceipt = uniqueFileName;
+                } catch (error) {
+                    console.error('Error uploading file to S3:', error);
+                    res.status(500).json({ message: 'Error uploading file to S3' });
+                    return;
+                }
             }
 
             // Update other properties of the item record
@@ -54,7 +86,7 @@ export class ItemRecordControllers {
 
             // Construct a new object with the updated properties
             const updatedItemRecord: UpdateItemRecordDTO = {
-                notes: updatedNotes ,
+                notes: updatedNotes,
                 receipt: updatedReceipt,
                 missing: missing === 'true',
             };
