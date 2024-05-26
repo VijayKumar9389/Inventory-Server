@@ -2,9 +2,6 @@ import { Request, Response } from 'express';
 import { ItemRecordServices } from '../services/item-record.services';
 import { UpdateItemRecordDTO } from '../models/item-record.models';
 import {InventoryServices} from "../services/inventory.services";
-import {ItemRecord} from "@prisma/client";
-import path from "path";
-import fs from "fs";
 import {DeleteObjectCommand, PutObjectCommand} from "@aws-sdk/client-s3";
 import {bucketName, s3} from "../middleware/s3";
 import {v4 as uuidv4} from "uuid";
@@ -14,8 +11,7 @@ const inventoryService: InventoryServices = new InventoryServices();
 
 export class ItemRecordControllers {
 
-
-// Controller method to handle the HTTP request
+    // Controller method to handle the HTTP request
     public async editItemRecord(req: Request, res: Response): Promise<void> {
         try {
             const id: number = parseInt(req.params.id);

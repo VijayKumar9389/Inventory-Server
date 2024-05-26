@@ -12,7 +12,7 @@ const itemService: ItemServices = new ItemServices();
 
 export class ItemControllers {
 
-// Create a new item
+    // Create a new item
     async createItem(req: Request, res: Response): Promise<void> {
         try {
             const { name, description, value } = req.body as UploadItemDTO;

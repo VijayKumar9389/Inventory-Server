@@ -1,6 +1,5 @@
 import express, { Express, Request, Response, NextFunction } from 'express';
 import cors from 'cors';
-import path from 'path';
 import locationRoutes from './routes/location.routes';
 import itemRoutes from './routes/item.routes';
 import userRoutes from './routes/user.routes';
@@ -17,7 +16,7 @@ const PORT = process.env.PORT || 4005;
 // Enable CORS
 app.use(
     cors({
-        origin: ['http://localhost:5173', 'http://localhost:5175'],
+        origin: process.env.ORIGIN,
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization', 'refreshToken', 'accessToken'],
