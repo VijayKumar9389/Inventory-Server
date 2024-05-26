@@ -27,10 +27,10 @@ const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4005;
 // Enable CORS
 app.use((0, cors_1.default)({
-    origin: ['http://localhost:5173', 'http://localhost:5175'],
+    origin: process.env.ORIGIN,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'refreshToken', 'accessToken'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin', 'refreshToken', 'accessToken'],
     exposedHeaders: ['Authorization'],
 }));
 app.use(express_1.default.json());
