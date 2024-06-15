@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ItemControllers = void 0;
 const item_services_1 = require("../services/item.services");
-const s3_1 = require("../middleware/s3");
+const s3_1 = require("../api/middleware/s3");
 const client_s3_1 = require("@aws-sdk/client-s3");
 const uuid_1 = require("uuid");
 const itemService = new item_services_1.ItemServices();
@@ -28,11 +28,16 @@ class ItemControllers {
                     res.status(400).json({ message: 'No file uploaded' });
                     return;
                 }
+                // Determine the environment
+                const environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+                // Generate a unique filename for the S3 object
                 const randomName = (0, uuid_1.v4)();
+                // Create a key with the environment folder
+                const key = `${environment}/${randomName}`;
                 // Set up parameters for uploading to S3
                 const params = {
                     Bucket: s3_1.bucketName,
-                    Key: randomName, // Use the original file name as the S3 object key
+                    Key: key, // Use the original file name as the S3 object key
                     Body: req.file.buffer,
                     ContentType: req.file.mimetype,
                 };
@@ -69,23 +74,29 @@ class ItemControllers {
                     res.status(404).json({ message: 'Item not found' });
                     return;
                 }
+                // Determine the environment
+                const environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
                 // Update the image property if a new file is uploaded
                 if (imageFile) {
                     // Upload the new image to S3
                     const randomName = (0, uuid_1.v4)();
+                    // Create a key with the environment folder
+                    const newKey = `${environment}/${randomName}`;
                     const params = {
                         Bucket: s3_1.bucketName,
-                        Key: randomName,
+                        Key: newKey,
                         Body: imageFile.buffer,
                         ContentType: imageFile.mimetype,
                     };
                     const command = new client_s3_1.PutObjectCommand(params);
                     yield s3_1.s3.send(command);
+                    // Delete key
+                    const deletkey = `${environment}/${currentItem.image}`;
                     // Remove the previous image file from S3 if it exists
                     if (currentItem.image) {
                         const deleteParams = {
                             Bucket: s3_1.bucketName,
-                            Key: currentItem.image,
+                            Key: deletkey,
                         };
                         const deleteCommand = new client_s3_1.DeleteObjectCommand(deleteParams);
                         yield s3_1.s3.send(deleteCommand);
@@ -129,6 +140,10 @@ class ItemControllers {
                     res.status(404).json({ message: 'Item not found' });
                     return;
                 }
+                // Determine the environment
+                const environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+                // Create the S3 key with the environment folder
+                const deleteKey = `${environment}/${deletedItem.image}`;
                 // If the item had an associated image, delete it from S3
                 if (deletedItem.image) {
                     const deleteParams = {

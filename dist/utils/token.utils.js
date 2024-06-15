@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.validateRefreshToken = exports.validateAccessToken = exports.generateRefreshToken = exports.generateAccessToken = void 0;
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const generateAccessToken = (user) => {
-    const expiresIn = '5s';
+    const expiresIn = '15min';
     return jsonwebtoken_1.default.sign({
         id: user.id,
         username: user.username,
@@ -15,7 +15,7 @@ const generateAccessToken = (user) => {
 };
 exports.generateAccessToken = generateAccessToken;
 const generateRefreshToken = (user) => {
-    const expiresIn = '5min';
+    const expiresIn = '1hr';
     return jsonwebtoken_1.default.sign({
         id: user.id,
         username: user.username,

@@ -14,15 +14,15 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const cors_1 = __importDefault(require("cors"));
-const location_routes_1 = __importDefault(require("./routes/location.routes"));
-const item_routes_1 = __importDefault(require("./routes/item.routes"));
-const user_routes_1 = __importDefault(require("./routes/user.routes"));
-const inventory_routes_1 = __importDefault(require("./routes/inventory.routes"));
-const item_record_routes_1 = __importDefault(require("./routes/item-record.routes"));
-const auth_1 = __importDefault(require("./middleware/auth"));
+const location_routes_1 = __importDefault(require("./api/routes/location.routes"));
+const item_routes_1 = __importDefault(require("./api/routes/item.routes"));
+const user_routes_1 = __importDefault(require("./api/routes/user.routes"));
+const inventory_routes_1 = __importDefault(require("./api/routes/inventory.routes"));
+const item_record_routes_1 = __importDefault(require("./api/routes/item-record.routes"));
+const auth_1 = __importDefault(require("./api/middleware/auth"));
 const client_s3_1 = require("@aws-sdk/client-s3");
 const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
-const s3_1 = require("./middleware/s3");
+const s3_1 = require("./api/middleware/s3");
 const app = (0, express_1.default)();
 const PORT = process.env.PORT || 4005;
 // Enable CORS
@@ -30,19 +30,23 @@ app.use((0, cors_1.default)({
     origin: process.env.ORIGIN,
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Access-Control-Allow-Origin', 'refreshToken', 'accessToken'],
-    exposedHeaders: ['Authorization'],
+    allowedHeaders: ['Content-Type', 'refreshToken', 'accessToken'],
 }));
+// Middleware
 app.use(express_1.default.json());
 app.get('/', (req, res) => {
     res.send('Inventory Server is running!');
 });
+// Fetch the signed URL for an image
 app.get('/api/images/:name', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
     const { name } = req.params;
-    console.log(name);
+    // Determine the environment
+    const environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+    // Create a key with the environment folder
+    const key = `${environment}/${name}`;
     const params = {
         Bucket: s3_1.bucketName,
-        Key: name,
+        Key: key,
     };
     try {
         const command = new client_s3_1.GetObjectCommand(params);

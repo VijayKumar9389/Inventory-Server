@@ -1,5 +1,6 @@
 import {Request, Response, NextFunction} from 'express';
 import jwt, {JwtPayload} from 'jsonwebtoken';
+import {validateAccessToken} from "../../utils/token.utils";
 
 const validateToken = (checkAdmin: boolean) => async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
@@ -11,15 +12,15 @@ const validateToken = (checkAdmin: boolean) => async (req: Request, res: Respons
         }
 
         // Extract the token from the header
-        const token: string = authorizationHeader as string;
+        const accessToken: string = authorizationHeader as string;
 
-        if (!token) {
+        if (!accessToken) {
             res.status(401).json({auth: false, msg: 'Access token missing'});
             return;
         }
 
         // Verify the token
-        const user = jwt.verify(token, 'secret') as JwtPayload;
+        const user = validateAccessToken(accessToken) as JwtPayload;
         console.log('Valid Token', user);
 
         if (checkAdmin && !user.isAdmin) {

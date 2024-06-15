@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -8,13 +31,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
         step((generator = generator.apply(thisArg, _arguments || [])).next());
     });
 };
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UserController = void 0;
 const user_service_1 = require("../services/user.service");
-const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
+const jsonwebtoken_1 = __importStar(require("jsonwebtoken"));
 const token_utils_1 = require("../utils/token.utils");
 const userService = new user_service_1.UserServices();
 class UserController {
@@ -32,6 +52,37 @@ class UserController {
             catch (error) {
                 console.error('Error creating user:', error);
                 res.status(500).json({ error: 'Failed to create user' });
+            }
+        });
+    }
+    // Delete a user
+    deleteUser(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                const id = parseInt(req.params.id);
+                if (!id) {
+                    throw new Error("Invalid user ID");
+                }
+                const deletedUser = yield userService.deleteUser(id);
+                res.status(200).json(deletedUser);
+            }
+            catch (error) {
+                console.error('Error deleting user:', error);
+                res.status(500).json({ error: 'Failed to delete user' });
+            }
+        });
+    }
+    // Edit a user
+    editUser(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const { id, username, password } = req.body;
+            try {
+                const user = yield userService.editUser(id, username, password);
+                res.status(200).json(user);
+            }
+            catch (error) {
+                console.error('Error editing user:', error);
+                res.status(500).json({ error: 'Failed to edit user' });
             }
         });
     }
@@ -77,6 +128,7 @@ class UserController {
             }
         });
     }
+    // Verify refresh token
     verifyRefreshToken(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             // Extract the refresh token from the 'refreshToken' header
@@ -86,7 +138,7 @@ class UserController {
                 return;
             }
             try {
-                const decoded = jsonwebtoken_1.default.verify(refreshToken, 'secret');
+                const decoded = (0, token_utils_1.validateRefreshToken)(refreshToken);
                 // Assuming the verification is successful, you can send the user data back as well
                 res.status(200).json({ auth: true, user: decoded.username });
             }
@@ -97,6 +149,7 @@ class UserController {
             }
         });
     }
+    // Refresh access token
     refreshAccessToken(req, res) {
         return __awaiter(this, void 0, void 0, function* () {
             // Extract the refresh token from the 'refreshToken' header
@@ -108,12 +161,41 @@ class UserController {
             try {
                 // Use the external function to validate the refresh token
                 const decoded = (0, token_utils_1.validateRefreshToken)(refreshToken);
-                const newAccessToken = jsonwebtoken_1.default.sign({ username: decoded.username }, 'secret', { expiresIn: '1m' });
+                // Generate a new access token using the decoded user information
+                const newAccessToken = (0, token_utils_1.generateAccessToken)(decoded);
                 res.status(200).json({ accessToken: newAccessToken });
             }
             catch (error) {
                 console.error('Error refreshing tokens:', error);
                 res.status(403).json({ error: 'Invalid refresh token' });
+            }
+        });
+    }
+    // Verify admin status using refresh token
+    verifyAdminStatus(req, res) {
+        return __awaiter(this, void 0, void 0, function* () {
+            const refreshToken = req.headers.refreshtoken;
+            try {
+                if (!refreshToken) {
+                    res.status(401).json({ auth: false, error: 'No refresh token provided' });
+                    return;
+                }
+                const decodedToken = jsonwebtoken_1.default.verify(refreshToken, 'secret');
+                const user = {
+                    id: decodedToken.id,
+                    isAdmin: decodedToken.isAdmin,
+                    username: decodedToken.username,
+                };
+                res.json({ auth: user.isAdmin, user: user.username });
+            }
+            catch (error) {
+                console.error('Error verifying user session:', error);
+                if (error instanceof jsonwebtoken_1.TokenExpiredError) {
+                    res.status(401).json({ auth: false, error: 'Token expired' });
+                }
+                else {
+                    res.status(500).json({ auth: false, error: 'Failed to verify session' });
+                }
             }
         });
     }

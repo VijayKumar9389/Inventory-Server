@@ -40,6 +40,41 @@ class UserServices {
             }
         });
     }
+    // Delete a user
+    deleteUser(id) {
+        return __awaiter(this, void 0, void 0, function* () {
+            try {
+                return yield this.prisma.user.delete({
+                    where: { id }
+                });
+            }
+            catch (error) {
+                console.error('Error deleting user:', error);
+                throw error;
+            }
+        });
+    }
+    // Edit a user
+    editUser(id, username, password) {
+        return __awaiter(this, void 0, void 0, function* () {
+            // Hash the password
+            const saltRounds = 10;
+            const hashedPassword = yield bcrypt_1.default.hash(password, saltRounds);
+            try {
+                return yield this.prisma.user.update({
+                    where: { id },
+                    data: {
+                        username,
+                        password: hashedPassword
+                    }
+                });
+            }
+            catch (error) {
+                console.error('Error editing user:', error);
+                throw error;
+            }
+        });
+    }
     // Get all users
     getUsers() {
         return __awaiter(this, void 0, void 0, function* () {

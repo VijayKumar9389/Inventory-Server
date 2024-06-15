@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import {User} from "@prisma/client";
 
 export const generateAccessToken = (user: User): string => {
-    const expiresIn = '5s';
+    const expiresIn = '15min';
     return jwt.sign(
         {
             id: user.id,
@@ -15,7 +15,7 @@ export const generateAccessToken = (user: User): string => {
 };
 
 export const generateRefreshToken = (user: User): string => {
-    const expiresIn = '5min';
+    const expiresIn = '1hr';
     return jwt.sign(
         {
             id: user.id,

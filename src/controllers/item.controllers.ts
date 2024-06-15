@@ -2,9 +2,7 @@ import {Request, Response} from 'express';
 import {ItemServices} from "../services/item.services";
 import {ItemWithInventory, UpdateItemDTO, UploadItemDTO} from "../models/inventory.models";
 import {Item} from "@prisma/client";
-import path from "path";
-import fs from "fs";
-import {bucketName, s3} from "../middleware/s3";
+import {bucketName, s3} from "../api/middleware/s3";
 import {DeleteObjectCommand, PutObjectCommand} from "@aws-sdk/client-s3";
 import {v4 as uuidv4} from "uuid";
 
@@ -26,12 +24,19 @@ export class ItemControllers {
                 return;
             }
 
+            // Determine the environment
+            const environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+
+            // Generate a unique filename for the S3 object
             const randomName: string = uuidv4();
+
+            // Create a key with the environment folder
+            const key: string = `${environment}/${randomName}`;
 
             // Set up parameters for uploading to S3
             const params = {
                 Bucket: bucketName,
-                Key: randomName, // Use the original file name as the S3 object key
+                Key: key, // Use the original file name as the S3 object key
                 Body: req.file.buffer,
                 ContentType: req.file.mimetype,
             };
@@ -72,26 +77,38 @@ export class ItemControllers {
                 return;
             }
 
+            // Determine the environment
+            const environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+
             // Update the image property if a new file is uploaded
             if (imageFile) {
+
                 // Upload the new image to S3
                 const randomName: string = uuidv4();
+
+                // Create a key with the environment folder
+                const newKey: string = `${environment}/${randomName}`;
+
+
                 const params = {
                     Bucket: bucketName,
-                    Key: randomName,
+                    Key: newKey,
                     Body: imageFile.buffer,
                     ContentType: imageFile.mimetype,
                 };
-                const command = new PutObjectCommand(params);
+                const command: PutObjectCommand = new PutObjectCommand(params);
                 await s3.send(command);
+
+                // Delete key
+                const deletkey: string = `${environment}/${currentItem.image}`;
 
                 // Remove the previous image file from S3 if it exists
                 if (currentItem.image) {
                     const deleteParams = {
                         Bucket: bucketName,
-                        Key: currentItem.image,
+                        Key: deletkey,
                     };
-                    const deleteCommand = new DeleteObjectCommand(deleteParams);
+                    const deleteCommand: DeleteObjectCommand = new DeleteObjectCommand(deleteParams);
                     await s3.send(deleteCommand);
                 }
 
@@ -140,6 +157,13 @@ export class ItemControllers {
                 res.status(404).json({ message: 'Item not found' });
                 return;
             }
+
+            // Determine the environment
+            const environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
+
+            // Create the S3 key with the environment folder
+            const deleteKey = `${environment}/${deletedItem.image}`;
+
 
             // If the item had an associated image, delete it from S3
             if (deletedItem.image) {

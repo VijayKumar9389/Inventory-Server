@@ -10,7 +10,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const location_controllers_1 = require("../controllers/location.controllers");
+const location_controllers_1 = require("../../controllers/location.controllers");
 const router = (0, express_1.Router)();
 const locationController = new location_controllers_1.LocationController();
 ``;

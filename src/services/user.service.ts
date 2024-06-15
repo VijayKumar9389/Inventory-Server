@@ -31,6 +31,38 @@ export class UserServices {
         }
     }
 
+    // Delete a user
+    async deleteUser(id: number): Promise<User> {
+        try {
+            return await this.prisma.user.delete({
+                where: {id}
+            });
+        } catch (error) {
+            console.error('Error deleting user:', error);
+            throw error;
+        }
+    }
+
+    // Edit a user
+    async editUser(id: number, username: string, password: string): Promise<User> {
+        // Hash the password
+        const saltRounds: number = 10;
+        const hashedPassword: string = await bcrypt.hash(password, saltRounds);
+
+        try {
+            return await this.prisma.user.update({
+                where: {id},
+                data: {
+                    username,
+                    password: hashedPassword
+                }
+            });
+        } catch (error) {
+            console.error('Error editing user:', error);
+            throw error;
+        }
+    }
+
     // Get all users
     async getUsers(): Promise<User[]> {
         try {
@@ -79,20 +111,6 @@ export class UserServices {
         }
     }
 
-    // // Generate an access token
-    // private generateAccessToken(user: any): string {
-    //     const secretKey = 'secret';
-    //     const expiresIn = '1min';
-    //
-    //     return jwt.sign(
-    //         {
-    //             id: user.id,
-    //             username: user.username,
-    //             isAdmin: user.isAdmin,
-    //         },
-    //         secretKey,
-    //         {expiresIn}
-    //     );
-    // }
+
 
 }

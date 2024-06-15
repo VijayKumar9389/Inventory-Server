@@ -4,7 +4,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = require("express");
-const item_record_controllers_1 = require("../controllers/item-record.controllers");
+const item_record_controllers_1 = require("../../controllers/item-record.controllers");
 const multer_1 = __importDefault(require("../middleware/multer"));
 const router = (0, express_1.Router)();
 const itemRecordController = new item_record_controllers_1.ItemRecordControllers();
