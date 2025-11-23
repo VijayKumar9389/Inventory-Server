@@ -1,6 +1,5 @@
 import {PrismaClient} from '@prisma/client';
-import {ItemWithInventory, UploadItemDTO, UpdateItemDTO} from "../models/inventory.models";
-import {v4 as uuidv4} from "uuid";
+import {UpdateItemDTO} from "../models/inventory.models";
 const prisma = new PrismaClient();
 export class ItemServices {
 

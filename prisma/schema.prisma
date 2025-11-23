@@ -59,3 +59,14 @@ model ItemRecord {
   Inventory   Inventory? @relation(fields: [inventoryId], references: [id])
   inventoryId Int?
 }
+
+// Define question from customers
+model CustomerQuestion {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String
+  interest  String
+  question  String
+  replied   Boolean  @default(false)
+  createdAt DateTime @default(now())
+}

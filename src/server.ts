@@ -1,13 +1,14 @@
-import express, { Express, Request, Response, NextFunction } from 'express';
+import express, {Express, Request, Response, NextFunction} from 'express';
 import cors from 'cors';
 import locationRoutes from './api/routes/location.routes';
 import itemRoutes from './api/routes/item.routes';
 import userRoutes from './api/routes/user.routes';
 import inventoryRoutes from './api/routes/inventory.routes';
 import itemRecordRoutes from './api/routes/item-record.routes';
+import customerQuestionRoutes from "./api/routes/customer-question.routes";
 import validateToken from './api/middleware/auth';
-import { GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import {GetObjectCommand} from '@aws-sdk/client-s3';
+import {getSignedUrl} from '@aws-sdk/s3-request-presigner';
 import {bucketName, s3} from "./api/middleware/s3";
 
 const app: Express = express();
@@ -16,7 +17,7 @@ const PORT = process.env.PORT || 4005;
 // Enable CORS
 app.use(
     cors({
-        origin: process.env.ORIGIN,
+        origin: [process.env.ORIGIN!, process.env.WEBSITE!],
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'refreshToken', 'accessToken'],
@@ -31,14 +32,13 @@ app.get('/', (req: Request, res: Response): void => {
 
 // Fetch the signed URL for an image
 app.get('/api/images/:name', async (req: Request, res: Response,): Promise<void> => {
-    const { name } = req.params;
+    const {name} = req.params;
 
     // Determine the environment
     const environment = process.env.NODE_ENV === 'production' ? 'production' : 'development';
 
     // Create a key with the environment folder
     const key: string = `${environment}/${name}`;
-
 
     const params = {
         Bucket: bucketName!,
@@ -47,11 +47,11 @@ app.get('/api/images/:name', async (req: Request, res: Response,): Promise<void>
 
     try {
         const command: GetObjectCommand = new GetObjectCommand(params);
-        const signedUrl: string = await getSignedUrl(s3, command, { expiresIn: 3600 }); // URL expires in 1 hour
-        res.json({ url: signedUrl });
+        const signedUrl: string = await getSignedUrl(s3, command, {expiresIn: 3600}); // URL expires in 1 hour
+        res.json({url: signedUrl});
     } catch (error) {
         console.error('Error generating signed URL:', error);
-        res.status(500).json({ error: 'Failed to generate signed URL' });
+        res.status(500).json({error: 'Failed to generate signed URL'});
     }
 });
 
@@ -61,11 +61,12 @@ app.use('/item', validateToken(false), itemRoutes);
 app.use('/inventory', validateToken(false), inventoryRoutes);
 app.use('/user', userRoutes);
 app.use('/item-record', validateToken(false), itemRecordRoutes);
+app.use('/customer', customerQuestionRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
     console.error(err);
-    res.status(500).json({ error: 'An unexpected error occurred' });
+    res.status(500).json({error: 'An unexpected error occurred'});
 });
 
 app.listen(PORT, () => {
