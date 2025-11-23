@@ -19,6 +19,7 @@ const item_routes_1 = __importDefault(require("./api/routes/item.routes"));
 const user_routes_1 = __importDefault(require("./api/routes/user.routes"));
 const inventory_routes_1 = __importDefault(require("./api/routes/inventory.routes"));
 const item_record_routes_1 = __importDefault(require("./api/routes/item-record.routes"));
+const customer_question_routes_1 = __importDefault(require("./api/routes/customer-question.routes"));
 const auth_1 = __importDefault(require("./api/middleware/auth"));
 const client_s3_1 = require("@aws-sdk/client-s3");
 const s3_request_presigner_1 = require("@aws-sdk/s3-request-presigner");
@@ -35,7 +36,7 @@ app.use((0, cors_1.default)({
 // Middleware
 app.use(express_1.default.json());
 app.get('/', (req, res) => {
-    res.send('Inventory Server is running!');
+    res.send('Inventory Server is running with customer question feature!');
 });
 // Fetch the signed URL for an image
 app.get('/api/images/:name', (req, res) => __awaiter(void 0, void 0, void 0, function* () {
@@ -64,6 +65,7 @@ app.use('/item', (0, auth_1.default)(false), item_routes_1.default);
 app.use('/inventory', (0, auth_1.default)(false), inventory_routes_1.default);
 app.use('/user', user_routes_1.default);
 app.use('/item-record', (0, auth_1.default)(false), item_record_routes_1.default);
+app.use('/customer', customer_question_routes_1.default);
 // Error handling middleware
 app.use((err, req, res, next) => {
     console.error(err);
