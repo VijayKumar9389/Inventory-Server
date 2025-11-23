@@ -27,7 +27,7 @@ app.use(
 // Middleware
 app.use(express.json());
 app.get('/', (req: Request, res: Response): void => {
-    res.send('Inventory Server is running!');
+    res.send('Inventory Server is running with customer question feature!');
 });
 
 // Fetch the signed URL for an image
