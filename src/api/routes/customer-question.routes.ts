@@ -6,7 +6,7 @@ const router = Router();
 const customerQuestionController = new CustomerQuestionController();
 
 // Route to get all customer questions
-router.get('/questions', validateToken(false), customerQuestionController.getAllQuestions);
+router.get('/questions', customerQuestionController.getAllQuestions);
 
 // Route to create a new customer question
 router.post('/create', customerQuestionController.createQuestion);
